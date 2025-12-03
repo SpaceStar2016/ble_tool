@@ -22,7 +22,7 @@ class _AppState extends State<App> {
         theme: ThemeData(
           colorScheme: .fromSeed(seedColor: Colors.deepPurple),
         ),
-        home: MainPage(),
+        home: Scaffold(body: MainPage()),
       ),
     );
   }
