@@ -23,7 +23,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(1, 2038367741388423912),
     name: 'BleLog',
-    lastPropertyId: const obx_int.IdUid(4, 432811209592431923),
+    lastPropertyId: const obx_int.IdUid(5, 4134637004320312467),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -45,9 +45,9 @@ final _entities = <obx_int.ModelEntity>[
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(4, 432811209592431923),
-        name: 'time',
-        type: 9,
+        id: const obx_int.IdUid(5, 4134637004320312467),
+        name: 'date',
+        type: 10,
         flags: 0,
       ),
     ],
@@ -134,7 +134,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [],
     retiredIndexUids: const [],
-    retiredPropertyUids: const [],
+    retiredPropertyUids: const [432811209592431923],
     retiredRelationUids: const [],
     modelVersion: 5,
     modelVersionParserMinimum: 5,
@@ -155,12 +155,11 @@ obx_int.ModelDefinition getObjectBoxModel() {
             ? null
             : fbb.writeString(object.bleName!);
         final dataOffset = fbb.writeString(object.data);
-        final timeOffset = fbb.writeString(object.time);
-        fbb.startTable(5);
+        fbb.startTable(6);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, bleNameOffset);
         fbb.addOffset(2, dataOffset);
-        fbb.addOffset(3, timeOffset);
+        fbb.addInt64(4, object.date.millisecondsSinceEpoch);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -173,16 +172,21 @@ obx_int.ModelDefinition getObjectBoxModel() {
           4,
           0,
         );
+        final bleNameParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 6);
         final dataParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGet(buffer, rootOffset, 8, '');
-        final timeParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 10, '');
-        final object = BleLog(id: idParam, data: dataParam, time: timeParam)
-          ..bleName = const fb.StringReader(
-            asciiOptimization: true,
-          ).vTableGetNullable(buffer, rootOffset, 6);
+        final dateParam = DateTime.fromMillisecondsSinceEpoch(
+          const fb.Int64Reader().vTableGet(buffer, rootOffset, 12, 0),
+        );
+        final object = BleLog(
+          id: idParam,
+          bleName: bleNameParam,
+          data: dataParam,
+          date: dateParam,
+        );
 
         return object;
       },
@@ -258,10 +262,8 @@ class BleLog_ {
     _entities[0].properties[2],
   );
 
-  /// See [BleLog.time].
-  static final time = obx.QueryStringProperty<BleLog>(
-    _entities[0].properties[3],
-  );
+  /// See [BleLog.date].
+  static final date = obx.QueryDateProperty<BleLog>(_entities[0].properties[3]);
 }
 
 /// [Note] entity fields to define ObjectBox queries.

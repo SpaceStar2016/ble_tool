@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:2038367741388423912",
-      "lastPropertyId": "4:432811209592431923",
+      "lastPropertyId": "5:4134637004320312467",
       "name": "BleLog",
       "properties": [
         {
@@ -25,9 +25,9 @@
           "type": 9
         },
         {
-          "id": "4:432811209592431923",
-          "name": "time",
-          "type": 9
+          "id": "5:4134637004320312467",
+          "name": "date",
+          "type": 10
         }
       ],
       "relations": []
@@ -70,7 +70,9 @@
   "modelVersionParserMinimum": 5,
   "retiredEntityUids": [],
   "retiredIndexUids": [],
-  "retiredPropertyUids": [],
+  "retiredPropertyUids": [
+    432811209592431923
+  ],
   "retiredRelationUids": [],
   "version": 1
 }

@@ -1,12 +1,10 @@
+import 'package:ble_tool/model/ble_log.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
 import 'model.dart';
 import 'objectbox.g.dart'; // created by `dart run build_runner build`
 
-/// Provides access to the ObjectBox Store throughout the app.
-///
-/// Create this in the apps main function.
 class ObjectBox {
   /// The Store of this app.
   late final Store _store;
@@ -14,10 +12,11 @@ class ObjectBox {
   /// A Box of notes.
   late final Box<Note> _noteBox;
 
+  late final Box<BleLog> _bleLogBox;
+
   ObjectBox._create(this._store) {
     _noteBox = Box<Note>(_store);
-
-    // Add some demo data if the box is empty.
+    _bleLogBox = Box<BleLog>(_store);
     if (_noteBox.isEmpty()) {
       _putDemoData();
     }
@@ -25,20 +24,10 @@ class ObjectBox {
 
   /// Create an instance of ObjectBox to use throughout the app.
   static Future<ObjectBox> create() async {
-    // Note: setting a unique directory is recommended if running on desktop
-    // platforms. If none is specified, the default directory is created in the
-    // users documents directory, which will not be unique between apps.
-    // On mobile this is typically fine, as each app has its own directory
-    // structure.
-
-    // Note: set macosApplicationGroup for sandboxed macOS applications, see the
-    // info boxes at https://docs.objectbox.io/getting-started for details.
-
-    // Future<Store> openStore() {...} is defined in the generated objectbox.g.dart
     final store = await openStore(
         directory:
-            p.join((await getApplicationDocumentsDirectory()).path, "obx-demo"),
-        macosApplicationGroup: "objectbox.demo");
+            p.join((await getApplicationDocumentsDirectory()).path, "objectbox-cache"),
+        macosApplicationGroup: "objectbox.ble");
     return ObjectBox._create(store);
   }
 
@@ -49,6 +38,17 @@ class ObjectBox {
       Note('Write a demo app for ObjectBox')
     ];
     _noteBox.putManyAsync(demoNotes);
+  }
+
+  Stream<List<BleLog>> getBleLogs(){
+
+    final builder = _bleLogBox.query().order(BleLog_.date, flags: Order.descending);
+    // Build and watch the query,
+    // set triggerImmediately to emit the query immediately on listen.
+    return builder
+        .watch(triggerImmediately: true)
+    // Map it to a list of notes to be used by a StreamBuilder.
+        .map((query) => query.find());
   }
 
   Stream<List<Note>> getNotes() {
