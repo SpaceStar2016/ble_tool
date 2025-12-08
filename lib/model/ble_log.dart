@@ -1,5 +1,4 @@
 
-
 import 'package:objectbox/objectbox.dart';
 
 @Entity()
