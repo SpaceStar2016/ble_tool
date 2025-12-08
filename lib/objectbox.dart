@@ -71,5 +71,11 @@ class ObjectBox {
   /// done using [Box.put].
   Future<void> addNote(String text) => _noteBox.putAsync(Note(text));
 
+  addBleLog(BleLog log) => _bleLogBox.putAsync(log);
+
   Future<void> removeNote(int id) => _noteBox.removeAsync(id);
+
+  Future<void> removeBleLog(int id) => _bleLogBox.removeAsync(id);
+
+  
 }
