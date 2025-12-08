@@ -1,4 +1,5 @@
 // import 'package:ble_tool/data_base.dart';
+import 'package:ble_tool/main.dart';
 import 'package:ble_tool/model/ble_log.dart';
 import 'package:ble_tool/provider/ble_provider.dart';
 import 'package:flutter/cupertino.dart';
@@ -38,12 +39,8 @@ class _BleActionBarState extends State<BleActionBar> {
         SizedBox(width: 20),
         GestureDetector(
           onTap: () async {
-            // final db = Database();
-            // var bb = BleLog(data: "123",time: "123123");
-            // final id = db.put(bb);
-            // final all =  db.getAll();
-            // print("-------");
-
+            final log = BleLog(data: '123123');
+            objectBox.addBleLog(log);
           },
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),

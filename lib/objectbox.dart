@@ -6,29 +6,36 @@ import 'model.dart';
 import 'objectbox.g.dart'; // created by `dart run build_runner build`
 
 class ObjectBox {
-  /// The Store of this app.
-  late final Store _store;
+  static ObjectBox? _instance;
+  static Future<ObjectBox> create() async {
+    if (_instance != null) return _instance!;
 
-  /// A Box of notes.
-  late final Box<Note> _noteBox;
+    final store = await openStore(
+      directory: p.join(
+        (await getApplicationDocumentsDirectory()).path,
+        "objectbox-cache",
+      ),
+      macosApplicationGroup: "objectbox.ble",
+    );
 
-  late final Box<BleLog> _bleLogBox;
-
-  ObjectBox._create(this._store) {
-    _noteBox = Box<Note>(_store);
-    _bleLogBox = Box<BleLog>(_store);
-    if (_noteBox.isEmpty()) {
-      _putDemoData();
-    }
+    final instance = ObjectBox._create(store);
+    _instance = instance;
+    return instance;
   }
 
-  /// Create an instance of ObjectBox to use throughout the app.
-  static Future<ObjectBox> create() async {
-    final store = await openStore(
-        directory:
-            p.join((await getApplicationDocumentsDirectory()).path, "objectbox-cache"),
-        macosApplicationGroup: "objectbox.ble");
-    return ObjectBox._create(store);
+  /// The Store
+  final Store store;
+
+  late final Box<Note> noteBox;
+  late final Box<BleLog> bleLogBox;
+
+  ObjectBox._create(this.store) {
+    noteBox = Box<Note>(store);
+    bleLogBox = Box<BleLog>(store);
+
+    if (noteBox.isEmpty()) {
+      _putDemoData();
+    }
   }
 
   void _putDemoData() {
@@ -37,45 +44,37 @@ class ObjectBox {
       Note('Delete notes by tapping on one'),
       Note('Write a demo app for ObjectBox')
     ];
-    _noteBox.putManyAsync(demoNotes);
+    noteBox.putMany(demoNotes);
   }
 
-  Stream<List<BleLog>> getBleLogs(){
+  // ---- APIs ----
 
-    final builder = _bleLogBox.query().order(BleLog_.date, flags: Order.descending);
-    // Build and watch the query,
-    // set triggerImmediately to emit the query immediately on listen.
-    return builder
-        .watch(triggerImmediately: true)
-    // Map it to a list of notes to be used by a StreamBuilder.
+  Stream<List<BleLog>> getBleLogs() {
+    final builder = bleLogBox.query()
+      ..order(BleLog_.date, flags: Order.descending);
+
+    return builder.watch(triggerImmediately: true)
         .map((query) => query.find());
   }
 
   Stream<List<Note>> getNotes() {
-    // Query for all notes, sorted by their date.
-    // https://docs.objectbox.io/queries
-    final builder = _noteBox.query().order(Note_.date, flags: Order.descending);
-    // Build and watch the query,
-    // set triggerImmediately to emit the query immediately on listen.
-    return builder
-        .watch(triggerImmediately: true)
-        // Map it to a list of notes to be used by a StreamBuilder.
+    final builder = noteBox.query()
+      ..order(Note_.date, flags: Order.descending);
+
+    return builder.watch(triggerImmediately: true)
         .map((query) => query.find());
   }
 
-  /// Add a note.
-  ///
-  /// To avoid frame drops, run ObjectBox operations that take longer than a
-  /// few milliseconds, e.g. putting many objects, asynchronously.
-  /// For this example only a single object is put which would also be fine if
-  /// done using [Box.put].
-  Future<void> addNote(String text) => _noteBox.putAsync(Note(text));
+  Future<int> addBleLog(BleLog log) => bleLogBox.putAsync(log);
+  Future<void> removeBleLog(int id) => bleLogBox.removeAsync(id);
 
-  addBleLog(BleLog log) => _bleLogBox.putAsync(log);
+  Future<void> addNote(String text) => noteBox.putAsync(Note(text));
+  Future<void> removeNote(int id) => noteBox.removeAsync(id);
 
-  Future<void> removeNote(int id) => _noteBox.removeAsync(id);
-
-  Future<void> removeBleLog(int id) => _bleLogBox.removeAsync(id);
-
-  
+  /// Important: close on app exit
+  void close() {
+    store.close();
+    _instance = null;
+  }
 }
+

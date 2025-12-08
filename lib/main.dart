@@ -5,14 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:objectbox/objectbox.dart';
 
 
-
+late ObjectBox objectBox;
 void main() async{
 
   WidgetsFlutterBinding.ensureInitialized();
 
-  ObjectBox.create();
-
-  // await Database().init();
+  objectBox = await ObjectBox.create();
 
   runApp(const App());
 }
