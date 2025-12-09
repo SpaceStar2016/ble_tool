@@ -1,4 +1,4 @@
-import 'package:ble_tool/log_module/page/log_page.dart';
+import 'package:ble_tool/log_module/page/log_list_page.dart';
 import 'package:flutter/material.dart';
 
 class MainPage extends StatefulWidget {
@@ -23,7 +23,7 @@ class _MainPageState extends State<MainPage> {
                 context,
                 MaterialPageRoute(
                   builder: (context) {
-                    return LogPage();
+                    return LogListPage();
                   },
                 ),
               );

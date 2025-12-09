@@ -17,6 +17,7 @@ class LogProvider with ChangeNotifier {
 
   void fetchLog() async {
      logs = await objectBox.getBleLogs();
+     notifyListeners();
   }
 
   void setRawData(String data){

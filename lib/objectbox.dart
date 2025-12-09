@@ -81,6 +81,8 @@ class ObjectBox {
   Future<void> addNote(String text) => noteBox.putAsync(Note(text));
   Future<void> removeNote(int id) => noteBox.removeAsync(id);
 
+  //todo 添加清空所有记录的API
+
   /// Important: close on app exit
   void close() {
     store.close();

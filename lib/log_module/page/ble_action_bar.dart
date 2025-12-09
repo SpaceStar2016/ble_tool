@@ -39,8 +39,6 @@ class _BleActionBarState extends State<BleActionBar> {
         SizedBox(width: 20),
         GestureDetector(
           onTap: () async {
-            final log = BleLog(data: '123123');
-            objectBox.addBleLog(log);
           },
           child: ValueListenableBuilder(
             valueListenable: widget.canSave,
