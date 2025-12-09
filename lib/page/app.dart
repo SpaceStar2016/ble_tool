@@ -1,4 +1,4 @@
-import 'package:ble_tool/provider/ble_provider.dart';
+import 'package:ble_tool/log_module/provider/log_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -16,7 +16,7 @@ class _AppState extends State<App> {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => BleProvider())],
+      providers: [ChangeNotifierProvider(create: (_) => LogProvider())],
       child: ScreenUtilInit(
           designSize: const Size(1125, 2436),
           minTextAdapt: true,

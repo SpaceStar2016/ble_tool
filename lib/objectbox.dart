@@ -1,4 +1,4 @@
-import 'package:ble_tool/model/ble_log.dart';
+import 'package:ble_tool/log_module/model/ble_log.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
@@ -49,23 +49,33 @@ class ObjectBox {
 
   // ---- APIs ----
 
-  Stream<List<BleLog>> getBleLogs() {
+  Future<List<BleLog>> getBleLogs() {
     final builder = bleLogBox.query()
       ..order(BleLog_.date, flags: Order.descending);
-
-    return builder.watch(triggerImmediately: true)
-        .map((query) => query.find());
+    return builder.build().findAsync();
   }
 
-  Stream<List<Note>> getNotes() {
-    final builder = noteBox.query()
-      ..order(Note_.date, flags: Order.descending);
-
-    return builder.watch(triggerImmediately: true)
-        .map((query) => query.find());
+  Future<int> addBleLog(BleLog log) async {
+    final id = await bleLogBox.putAsync(log);
+    
+    // 淘汰策略：如果超过100条，删除最旧的10条
+    final count = bleLogBox.count();
+    if (count > 100) {
+      // 按时间升序排列（最旧的在前），取前10条删除
+      final oldestLogs = bleLogBox
+          .query()
+          .order(BleLog_.date) // 默认升序，最旧的在前
+          .build()
+          .find()
+          .take(10)
+          .map((log) => log.id)
+          .toList();
+      bleLogBox.removeMany(oldestLogs);
+    }
+    
+    return id;
   }
 
-  Future<int> addBleLog(BleLog log) => bleLogBox.putAsync(log);
   Future<void> removeBleLog(int id) => bleLogBox.removeAsync(id);
 
   Future<void> addNote(String text) => noteBox.putAsync(Note(text));

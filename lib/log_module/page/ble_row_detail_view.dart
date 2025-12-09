@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 
-import '../app_base_page.dart';
+import '../../app_base_page.dart';
 
 class BleRowDetailView extends AppBaseStatefulPage {
   const BleRowDetailView({super.key});

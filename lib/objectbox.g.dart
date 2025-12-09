@@ -15,7 +15,7 @@ import 'package:objectbox/objectbox.dart' as obx;
 import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
 import 'model.dart';
-import 'model/ble_log.dart';
+import 'log_module/model/ble_log.dart';
 
 export 'package:objectbox/objectbox.dart'; // so that callers only have to import this file
 

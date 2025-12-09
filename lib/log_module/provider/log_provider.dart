@@ -1,9 +1,10 @@
 
-import 'package:ble_tool/model/ble_log.dart';
+import 'package:ble_tool/log_module/model/ble_log.dart';
+import 'package:ble_tool/main.dart';
 import 'package:flutter/cupertino.dart';
-import '../string_util.dart';
+import '../../string_util.dart';
 
-class BleProvider with ChangeNotifier {
+class LogProvider with ChangeNotifier {
 
   List<BleLog> logs = [];
 
@@ -12,6 +13,11 @@ class BleProvider with ChangeNotifier {
   List<String> rawSendRows = [];
 
   List<String> rawReceiveRow = [];
+
+
+  void fetchLog() async {
+     logs = await objectBox.getBleLogs();
+  }
 
   void setRawData(String data){
     rawData = data;
