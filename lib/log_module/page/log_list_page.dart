@@ -27,14 +27,21 @@ class _LogPageState extends AppBaseStatefulPageState<LogListPage> {
             color: AppTheme.primaryColor,
             size: 26,
           ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (ctx) => const BleLogEditPage()),
-            );
-          },
+          onPressed: () => _navigateToEditPage(),
         ),
       ];
+
+  void _navigateToEditPage() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (ctx) => const BleLogEditPage()),
+    );
+    if (result == true && mounted) {
+      // 刷新列表
+      final logProvider = Provider.of<LogProvider>(context, listen: false);
+      logProvider.fetchLog();
+    }
+  }
 
   @override
   void initState() {
@@ -130,11 +137,7 @@ class _LogPageState extends AppBaseStatefulPageState<LogListPage> {
           ),
           const SizedBox(height: AppTheme.spacingXLarge),
           GestureDetector(
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (ctx) {
-                return const BleLogEditPage();
-              }));
-            },
+            onTap: () => _navigateToEditPage(),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               decoration: BoxDecoration(

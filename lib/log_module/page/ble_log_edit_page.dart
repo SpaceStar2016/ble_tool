@@ -1,4 +1,6 @@
 import 'package:ble_tool/app_base_page.dart';
+import 'package:ble_tool/log_module/model/ble_log.dart';
+import 'package:ble_tool/main.dart';
 import 'package:ble_tool/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -10,11 +12,28 @@ class BleLogEditPage extends AppBaseStatefulPage {
 }
 
 class _BleLogEditPageState extends AppBaseStatefulPageState<BleLogEditPage> {
-  bool _selected = false;
-  bool _filterSelected = false;
+  final TextEditingController _contentController = TextEditingController();
+  final TextEditingController _remarkController = TextEditingController();
+  final FocusNode _contentFocusNode = FocusNode();
+  final FocusNode _remarkFocusNode = FocusNode();
 
   @override
   String get pageTitle => '编辑日志';
+
+  @override
+  List<Widget>? get navigatorRightWidget => [
+        TextButton(
+          onPressed: _saveLog,
+          child: const Text(
+            '保存',
+            style: TextStyle(
+              color: AppTheme.primaryColor,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ];
 
   @override
   void Function()? get onBackClick {
@@ -24,103 +43,178 @@ class _BleLogEditPageState extends AppBaseStatefulPageState<BleLogEditPage> {
   }
 
   @override
+  void dispose() {
+    _contentController.dispose();
+    _remarkController.dispose();
+    _contentFocusNode.dispose();
+    _remarkFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _saveLog() async {
+    final content = _contentController.text.trim();
+    final remark = _remarkController.text.trim();
+
+    if (content.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('请输入日志内容'),
+          backgroundColor: AppTheme.errorColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+          ),
+        ),
+      );
+      return;
+    }
+
+    // 创建 BleLog 对象
+    final bleLog = BleLog(
+      data: content,
+      remark: remark.isNotEmpty ? remark : null,
+    );
+
+    // 保存到数据库
+    await objectBox.addBleLog(bleLog);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('保存成功'),
+        backgroundColor: AppTheme.accentColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        ),
+      ),
+    );
+
+    Navigator.pop(context, true);  // 返回 true 表示有新增数据
+  }
+
+  @override
   Widget body(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppTheme.spacingMedium),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return GestureDetector(
+      onTap: () {
+        // 点击空白区域收起键盘
+        FocusScope.of(context).unfocus();
+      },
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppTheme.spacingMedium),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 内容输入区域
+            _buildSectionTitle('日志内容', icon: Icons.edit_note_rounded, required: true),
+            const SizedBox(height: AppTheme.spacingSmall),
+            _buildContentInput(),
+            const SizedBox(height: AppTheme.spacingLarge),
+
+            // 备注输入区域
+            _buildSectionTitle('备注', icon: Icons.sticky_note_2_outlined),
+            const SizedBox(height: AppTheme.spacingSmall),
+            _buildRemarkInput(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, {required IconData icon, bool required = false}) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 18,
+          color: AppTheme.primaryColor,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            color: AppTheme.textSecondary,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        if (required)
           const Text(
-            '标签选择',
+            ' *',
             style: TextStyle(
-              color: AppTheme.textSecondary,
+              color: AppTheme.errorColor,
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: AppTheme.spacingMedium),
-          Wrap(
-            spacing: AppTheme.spacingSmall,
-            runSpacing: AppTheme.spacingSmall,
-            children: [
-              // 基础 Chip
-              Chip(
-                label: const Text('基础标签'),
-                backgroundColor: AppTheme.surfaceColor,
-                side: BorderSide(color: AppTheme.borderColor.withOpacity(0.5)),
-                deleteIcon: const Icon(Icons.close_rounded, size: 18),
-                deleteIconColor: AppTheme.textSecondary,
-                onDeleted: () => print('删除'),
-              ),
+      ],
+    );
+  }
 
-              // 输入型 Chip
-              InputChip(
-                label: const Text('可选标签'),
-                selected: _selected,
-                selectedColor: AppTheme.primaryColor.withOpacity(0.2),
-                backgroundColor: AppTheme.surfaceColor,
-                checkmarkColor: AppTheme.primaryColor,
-                side: BorderSide(
-                  color: _selected
-                      ? AppTheme.primaryColor
-                      : AppTheme.borderColor.withOpacity(0.5),
-                ),
-                onSelected: (bool selected) {
-                  setState(() {
-                    _selected = selected;
-                  });
-                },
-              ),
-
-              // 筛选型 Chip
-              FilterChip(
-                label: const Text('筛选标签'),
-                selected: _filterSelected,
-                selectedColor: AppTheme.accentColor.withOpacity(0.2),
-                backgroundColor: AppTheme.surfaceColor,
-                checkmarkColor: AppTheme.accentColor,
-                side: BorderSide(
-                  color: _filterSelected
-                      ? AppTheme.accentColor
-                      : AppTheme.borderColor.withOpacity(0.5),
-                ),
-                onSelected: (bool selected) {
-                  setState(() {
-                    _filterSelected = selected;
-                  });
-                },
-              ),
-
-              // 动作型 Chip
-              ActionChip(
-                avatar: const Icon(
-                  Icons.bolt_rounded,
-                  size: 18,
-                  color: AppTheme.warningColor,
-                ),
-                label: const Text('动作标签'),
-                backgroundColor: AppTheme.surfaceColor,
-                side: BorderSide(color: AppTheme.borderColor.withOpacity(0.5)),
-                onPressed: () => print('点击'),
-              ),
-
-              // 头像 Chip
-              Chip(
-                avatar: CircleAvatar(
-                  backgroundColor: AppTheme.primaryColor,
-                  child: const Icon(
-                    Icons.person_rounded,
-                    size: 16,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                label: const Text('用户标签'),
-                backgroundColor: AppTheme.surfaceColor,
-                side: BorderSide(color: AppTheme.borderColor.withOpacity(0.5)),
-              ),
-            ],
+  Widget _buildContentInput() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(
+          color: AppTheme.borderColor.withOpacity(0.5),
+          width: 1,
+        ),
+      ),
+      child: TextField(
+        controller: _contentController,
+        focusNode: _contentFocusNode,
+        maxLines: 8,
+        style: const TextStyle(
+          color: AppTheme.textPrimary,
+          fontSize: 14,
+          height: 1.5,
+        ),
+        decoration: const InputDecoration(
+          hintText: '请输入日志内容...',
+          hintStyle: TextStyle(
+            color: AppTheme.textHint,
+            fontSize: 14,
           ),
-        ],
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.all(AppTheme.spacingMedium),
+        ),
+        onSubmitted: (_) {
+          _remarkFocusNode.requestFocus();
+        },
+      ),
+    );
+  }
+
+  Widget _buildRemarkInput() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(
+          color: AppTheme.borderColor.withOpacity(0.5),
+          width: 1,
+        ),
+      ),
+      child: TextField(
+        controller: _remarkController,
+        focusNode: _remarkFocusNode,
+        maxLines: 4,
+        style: const TextStyle(
+          color: AppTheme.textPrimary,
+          fontSize: 14,
+          height: 1.5,
+        ),
+        decoration: const InputDecoration(
+          hintText: '添加备注信息（可选）...',
+          hintStyle: TextStyle(
+            color: AppTheme.textHint,
+            fontSize: 14,
+          ),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.all(AppTheme.spacingMedium),
+        ),
       ),
     );
   }

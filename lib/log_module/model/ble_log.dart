@@ -9,14 +9,16 @@ class BleLog {
 
   String? bleName;
   String data;
+  String? remark;  // 新增备注字段
   DateTime date;
 
   BleLog({
     this.id = 0,
     this.bleName,
     required this.data,
+    this.remark,
     DateTime? date,
-  }) : date = date ?? DateTime.now();  // 构造函数结束要加分号
+  }) : date = date ?? DateTime.now();
 
   String get dateFormat => DateFormat('dd.MM.yyyy HH:mm:ss').format(date);
 }
