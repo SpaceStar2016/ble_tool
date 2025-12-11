@@ -20,6 +20,12 @@ class LogProvider with ChangeNotifier {
      notifyListeners();
   }
 
+  Future<void> deleteLog(int id) async {
+    await objectBox.removeBleLog(id);
+    logs.removeWhere((log) => log.id == id);
+    notifyListeners();
+  }
+
   void setRawData(String data){
     rawData = data;
   }

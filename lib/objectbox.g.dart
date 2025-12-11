@@ -14,8 +14,8 @@ import 'package:objectbox/internal.dart'
 import 'package:objectbox/objectbox.dart' as obx;
 import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
-import 'model.dart';
 import 'log_module/model/ble_log.dart';
+import 'model.dart';
 
 export 'package:objectbox/objectbox.dart'; // so that callers only have to import this file
 
@@ -23,7 +23,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(1, 2038367741388423912),
     name: 'BleLog',
-    lastPropertyId: const obx_int.IdUid(5, 4134637004320312467),
+    lastPropertyId: const obx_int.IdUid(6, 4705293539106844855),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -48,6 +48,12 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(5, 4134637004320312467),
         name: 'date',
         type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 4705293539106844855),
+        name: 'remark',
+        type: 9,
         flags: 0,
       ),
     ],
@@ -155,11 +161,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
             ? null
             : fbb.writeString(object.bleName!);
         final dataOffset = fbb.writeString(object.data);
-        fbb.startTable(6);
+        final remarkOffset = object.remark == null
+            ? null
+            : fbb.writeString(object.remark!);
+        fbb.startTable(7);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, bleNameOffset);
         fbb.addOffset(2, dataOffset);
         fbb.addInt64(4, object.date.millisecondsSinceEpoch);
+        fbb.addOffset(5, remarkOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -178,6 +188,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final dataParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGet(buffer, rootOffset, 8, '');
+        final remarkParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 14);
         final dateParam = DateTime.fromMillisecondsSinceEpoch(
           const fb.Int64Reader().vTableGet(buffer, rootOffset, 12, 0),
         );
@@ -185,6 +198,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           id: idParam,
           bleName: bleNameParam,
           data: dataParam,
+          remark: remarkParam,
           date: dateParam,
         );
 
@@ -264,6 +278,11 @@ class BleLog_ {
 
   /// See [BleLog.date].
   static final date = obx.QueryDateProperty<BleLog>(_entities[0].properties[3]);
+
+  /// See [BleLog.remark].
+  static final remark = obx.QueryStringProperty<BleLog>(
+    _entities[0].properties[4],
+  );
 }
 
 /// [Note] entity fields to define ObjectBox queries.

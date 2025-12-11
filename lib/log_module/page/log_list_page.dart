@@ -1,11 +1,11 @@
 import 'package:ble_tool/app_base_page.dart';
+import 'package:ble_tool/log_module/model/ble_log.dart';
 import 'package:ble_tool/log_module/page/ble_log_edit_page.dart';
+import 'package:ble_tool/log_module/page/log_item_view.dart';
 import 'package:ble_tool/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'ble_action_bar.dart';
-import 'send_row_view.dart';
 import '../provider/log_provider.dart';
 
 class LogListPage extends AppBaseStatefulPage {
@@ -31,13 +31,12 @@ class _LogPageState extends AppBaseStatefulPageState<LogListPage> {
         ),
       ];
 
-  void _navigateToEditPage() async {
+  void _navigateToEditPage({BleLog? bleLog}) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (ctx) => const BleLogEditPage()),
+      MaterialPageRoute(builder: (ctx) => BleLogEditPage(bleLog: bleLog)),
     );
     if (result == true && mounted) {
-      // 刷新列表
       final logProvider = Provider.of<LogProvider>(context, listen: false);
       logProvider.fetchLog();
     }
@@ -58,56 +57,175 @@ class _LogPageState extends AppBaseStatefulPageState<LogListPage> {
           : ListView.separated(
               padding: const EdgeInsets.all(AppTheme.spacingMedium),
               itemCount: bleProvider.logs.length,
-              separatorBuilder: (ctx, index) => const SizedBox(height: AppTheme.spacingSmall),
+              separatorBuilder: (ctx, index) =>
+                  const SizedBox(height: AppTheme.spacingSmall),
               itemBuilder: (ctx, index) {
                 final log = bleProvider.logs[index];
-                return Container(
-                  padding: const EdgeInsets.all(AppTheme.spacingMedium),
-                  decoration: BoxDecoration(
-                    color: AppTheme.cardBackground,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                    border: Border.all(
-                      color: AppTheme.borderColor.withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                        ),
-                        child: const Icon(
-                          Icons.description_outlined,
-                          color: AppTheme.primaryColor,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: AppTheme.spacingMedium),
-                      Expanded(
-                        child: Text(
-                          "${log.data}",
-                          style: const TextStyle(
-                            color: AppTheme.textPrimary,
-                            fontSize: 14,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const Icon(
-                        Icons.chevron_right_rounded,
-                        color: AppTheme.textSecondary,
-                        size: 20,
-                      ),
-                    ],
-                  ),
-                );
+                return _buildSwipeableLogItem(log);
               },
             );
     });
+  }
+
+  Widget _buildSwipeableLogItem(BleLog log) {
+    return Dismissible(
+      key: Key('log_${log.id}'),
+      direction: DismissDirection.endToStart,
+      confirmDismiss: (direction) => _showDeleteConfirmDialog(log),
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: AppTheme.spacingLarge),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.errorColor.withOpacity(0.1),
+              AppTheme.errorColor.withOpacity(0.8),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.delete_outline_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
+            SizedBox(width: 8),
+            Text(
+              '删除',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+      child: LogItemView(
+        bleLog: log,
+        onTap: () => _navigateToEditPage(bleLog: log),
+      ),
+    );
+  }
+
+  Future<bool> _showDeleteConfirmDialog(BleLog log) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.cardBackground,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.errorColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+              ),
+              child: const Icon(
+                Icons.warning_amber_rounded,
+                color: AppTheme.errorColor,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              '确认删除',
+              style: TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '确定要删除这条日志吗？此操作不可撤销。',
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceColor,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+              ),
+              child: Text(
+                log.data,
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 13,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              '取消',
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 16,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              backgroundColor: AppTheme.errorColor.withOpacity(0.1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+              ),
+            ),
+            child: const Text(
+              '删除',
+              style: TextStyle(
+                color: AppTheme.errorColor,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      final logProvider = Provider.of<LogProvider>(context, listen: false);
+      await logProvider.deleteLog(log.id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('已删除'),
+            backgroundColor: AppTheme.accentColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+
+    return false;
   }
 
   Widget _noDataView(String text) {
@@ -117,7 +235,7 @@ class _LogPageState extends AppBaseStatefulPageState<LogListPage> {
         children: [
           Container(
             padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppTheme.surfaceColor,
               shape: BoxShape.circle,
             ),

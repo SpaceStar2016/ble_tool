@@ -20,5 +20,5 @@ class BleLog {
     DateTime? date,
   }) : date = date ?? DateTime.now();
 
-  String get dateFormat => DateFormat('dd.MM.yyyy HH:mm:ss').format(date);
+  String get dateFormat => DateFormat('yyyy.MM.dd HH:mm:ss').format(date);
 }

@@ -5,7 +5,9 @@ import 'package:ble_tool/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class BleLogEditPage extends AppBaseStatefulPage {
-  const BleLogEditPage({super.key});
+  final BleLog? bleLog;  // 可选参数，传入时为编辑模式
+
+  const BleLogEditPage({super.key, this.bleLog});
 
   @override
   State<BleLogEditPage> createState() => _BleLogEditPageState();
@@ -17,8 +19,10 @@ class _BleLogEditPageState extends AppBaseStatefulPageState<BleLogEditPage> {
   final FocusNode _contentFocusNode = FocusNode();
   final FocusNode _remarkFocusNode = FocusNode();
 
+  bool get isEditMode => widget.bleLog != null;
+
   @override
-  String get pageTitle => '编辑日志';
+  String get pageTitle => isEditMode ? '编辑日志' : '新增日志';
 
   @override
   List<Widget>? get navigatorRightWidget => [
@@ -40,6 +44,16 @@ class _BleLogEditPageState extends AppBaseStatefulPageState<BleLogEditPage> {
     return () {
       Navigator.pop(context);
     };
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // 如果是编辑模式，填充已有数据
+    if (isEditMode) {
+      _contentController.text = widget.bleLog!.data;
+      _remarkController.text = widget.bleLog!.remark ?? '';
+    }
   }
 
   @override
@@ -69,10 +83,12 @@ class _BleLogEditPageState extends AppBaseStatefulPageState<BleLogEditPage> {
       return;
     }
 
-    // 创建 BleLog 对象
+    // 创建或更新 BleLog 对象
     final bleLog = BleLog(
+      id: isEditMode ? widget.bleLog!.id : 0,  // 编辑模式保留原 id
       data: content,
       remark: remark.isNotEmpty ? remark : null,
+      date: isEditMode ? widget.bleLog!.date : null,  // 编辑模式保留原日期
     );
 
     // 保存到数据库
@@ -82,7 +98,7 @@ class _BleLogEditPageState extends AppBaseStatefulPageState<BleLogEditPage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('保存成功'),
+        content: Text(isEditMode ? '更新成功' : '保存成功'),
         backgroundColor: AppTheme.accentColor,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -91,7 +107,7 @@ class _BleLogEditPageState extends AppBaseStatefulPageState<BleLogEditPage> {
       ),
     );
 
-    Navigator.pop(context, true);  // 返回 true 表示有新增数据
+    Navigator.pop(context, true);  // 返回 true 表示有数据变更
   }
 
   @override
@@ -106,6 +122,12 @@ class _BleLogEditPageState extends AppBaseStatefulPageState<BleLogEditPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 编辑模式显示日志信息
+            if (isEditMode) ...[
+              _buildInfoCard(),
+              const SizedBox(height: AppTheme.spacingLarge),
+            ],
+
             // 内容输入区域
             _buildSectionTitle('日志内容', icon: Icons.edit_note_rounded, required: true),
             const SizedBox(height: AppTheme.spacingSmall),
@@ -118,6 +140,60 @@ class _BleLogEditPageState extends AppBaseStatefulPageState<BleLogEditPage> {
             _buildRemarkInput(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard() {
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacingMedium),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(
+          color: AppTheme.primaryColor.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+            ),
+            child: const Icon(
+              Icons.info_outline_rounded,
+              color: AppTheme.primaryColor,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: AppTheme.spacingMedium),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '创建时间',
+                  style: TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.bleLog!.dateFormat,
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

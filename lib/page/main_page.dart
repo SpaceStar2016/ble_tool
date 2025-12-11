@@ -83,7 +83,7 @@ class _MainPageState extends State<MainPage> {
                   ),
                   _buildToolCard(
                     icon: Icons.transform_rounded,
-                    title: 'Base64 转换',
+                    title: 'Base64转16进制',
                     subtitle: '编码解码工具',
                     gradient: AppTheme.accentGradient,
                     onTap: () {
@@ -93,6 +93,19 @@ class _MainPageState extends State<MainPage> {
                           builder: (context) => const Base64ConvertPage(),
                         ),
                       );
+                    },
+                  ),
+                  _buildToolCard(
+                    icon: Icons.data_object_rounded,
+                    title: 'JSON 工具',
+                    subtitle: '格式化与解析',
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFBF5AF2), Color(0xFFFF6482)],
+                    ),
+                    onTap: () {
+                      // TODO: 跳转到 JSON 工具页面
                     },
                   ),
                   _buildToolCard(
