@@ -1,6 +1,7 @@
 import 'package:ble_tool/app_base_page.dart';
 import 'package:ble_tool/log_module/model/ble_log.dart';
 import 'package:ble_tool/log_module/page/log_select_page.dart';
+import 'package:ble_tool/string_module/page/string_format_page.dart';
 import 'package:ble_tool/string_module/util/string_diff_util.dart';
 import 'package:ble_tool/theme/app_theme.dart';
 import 'package:flutter/material.dart';
@@ -75,6 +76,23 @@ class _StringDiffPageState extends AppBaseStatefulPageState<StringDiffPage> {
 
     if (selectedLog != null) {
       controller.text = selectedLog.data;
+      setState(() {});
+    }
+  }
+
+  Future<void> _formatText(TextEditingController controller) async {
+    final String? result = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => StringFormatPage(
+          initialText: controller.text,
+          selectMode: true,
+        ),
+      ),
+    );
+
+    if (result != null && result.isNotEmpty) {
+      controller.text = result;
       setState(() {});
     }
   }
@@ -172,7 +190,7 @@ class _StringDiffPageState extends AppBaseStatefulPageState<StringDiffPage> {
         children: [
           TextField(
             controller: controller,
-            maxLines: 4,
+            maxLines: 8,
             style: const TextStyle(
               color: AppTheme.textPrimary,
               fontSize: 14,
@@ -230,6 +248,37 @@ class _StringDiffPageState extends AppBaseStatefulPageState<StringDiffPage> {
                             SizedBox(width: 4),
                             Text(
                               '日志导入',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // 格式化按钮
+                    GestureDetector(
+                      onTap: () => _formatText(controller),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.accentGradient,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.text_format_rounded,
+                              size: 12,
+                              color: AppTheme.textPrimary,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              '格式化',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,

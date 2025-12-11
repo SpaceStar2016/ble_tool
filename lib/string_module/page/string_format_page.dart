@@ -5,7 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class StringFormatPage extends AppBaseStatefulPage {
-  const StringFormatPage({super.key});
+  /// 初始文本
+  final String? initialText;
+  
+  /// 是否为选择模式（选择模式下会返回格式化后的结果）
+  final bool selectMode;
+
+  const StringFormatPage({
+    super.key,
+    this.initialText,
+    this.selectMode = false,
+  });
 
   @override
   State<StringFormatPage> createState() => _StringFormatPageState();
@@ -22,9 +32,41 @@ class _StringFormatPageState extends AppBaseStatefulPageState<StringFormatPage> 
   void Function()? get onBackClick => () => Navigator.pop(context);
 
   @override
+  List<Widget>? get navigatorRightWidget => widget.selectMode
+      ? [
+          TextButton(
+            onPressed: _confirmSelection,
+            child: const Text(
+              '确认',
+              style: TextStyle(
+                color: AppTheme.primaryColor,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ]
+      : null;
+
+  @override
+  void initState() {
+    super.initState();
+    // 如果有初始文本，设置到输入框
+    if (widget.initialText != null && widget.initialText!.isNotEmpty) {
+      _inputController.text = widget.initialText!;
+    }
+  }
+
+  @override
   void dispose() {
     _inputController.dispose();
     super.dispose();
+  }
+
+  void _confirmSelection() {
+    // 返回结果：优先返回格式化结果，如果没有则返回输入内容
+    final resultText = _result.isNotEmpty ? _result : _inputController.text;
+    Navigator.pop(context, resultText);
   }
 
   void _applyFormat(String Function(String) formatter) {
@@ -83,6 +125,12 @@ class _StringFormatPageState extends AppBaseStatefulPageState<StringFormatPage> 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 选择模式提示
+          if (widget.selectMode) ...[
+            _buildSelectModeHint(),
+            const SizedBox(height: AppTheme.spacingMedium),
+          ],
+
           // 输入区域
           _buildSectionTitle('输入文本', icon: Icons.input_rounded),
           const SizedBox(height: AppTheme.spacingSmall),
@@ -99,6 +147,38 @@ class _StringFormatPageState extends AppBaseStatefulPageState<StringFormatPage> 
           _buildSectionTitle('结果', icon: Icons.output_rounded),
           const SizedBox(height: AppTheme.spacingSmall),
           _buildResultArea(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectModeHint() {
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacingMedium),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(
+          color: AppTheme.primaryColor.withOpacity(0.3),
+        ),
+      ),
+      child: const Row(
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            size: 18,
+            color: AppTheme.primaryColor,
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '格式化完成后，点击右上角"确认"返回结果',
+              style: TextStyle(
+                color: AppTheme.primaryColor,
+                fontSize: 13,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -285,6 +365,12 @@ class _StringFormatPageState extends AppBaseStatefulPageState<StringFormatPage> 
           icon: Icons.format_indent_decrease_rounded,
           color: const Color(0xFFAC8E68),
           onTap: () => _applyFormat(StringFormatUtil.trim),
+        ),
+        _buildFormatButton(
+          label: 'iOS提取进制数据',
+          icon: Icons.data_array_rounded,
+          color: const Color(0xFF32ADE6),
+          onTap: () => _applyFormat(StringFormatUtil.extractHexDataIOS),
         ),
       ],
     );
@@ -477,4 +563,3 @@ class _StringFormatPageState extends AppBaseStatefulPageState<StringFormatPage> 
     );
   }
 }
-

@@ -119,5 +119,67 @@ class StringFormatUtil {
     if (input.isEmpty) return 0;
     return input.split('\n').length;
   }
+
+  /// iOS 提取进制数据（从尖括号中提取十六进制数据）
+  /// 例如：从 "发送 <a3000102 5107ff00>" 中提取十六进制数据
+  /// 提取后去除空格，每20个字符分为一组换行输出
+  static String extractHexDataIOS(String input) {
+    if (input.isEmpty) return '';
+    
+    // 正则匹配尖括号内的内容
+    final regex = RegExp(r'<([^>]+)>');
+    final matches = regex.allMatches(input);
+    
+    final hexDataList = <String>[];
+    
+    for (final match in matches) {
+      final content = match.group(1);
+      if (content != null && _isHexData(content)) {
+        // 去除空格
+        final cleanHex = content.replaceAll(RegExp(r'\s'), '');
+        // 每20个字符分为一组
+        final formattedHex = _splitByLength(cleanHex, 20);
+        hexDataList.add(formattedHex);
+      }
+    }
+    
+    return hexDataList.join('\n\n');
+  }
+
+  /// 按指定长度分割字符串，每组用换行分隔
+  static String _splitByLength(String input, int length) {
+    if (input.isEmpty) return input;
+    if (input.length <= length) return input;
+    
+    final buffer = StringBuffer();
+    for (var i = 0; i < input.length; i += length) {
+      if (i > 0) buffer.write('\n');
+      final end = (i + length > input.length) ? input.length : i + length;
+      buffer.write(input.substring(i, end));
+    }
+    return buffer.toString();
+  }
+
+  /// 判断字符串是否为十六进制数据（只包含0-9, a-f, A-F和空格）
+  static bool _isHexData(String content) {
+    // 去除空格后检查是否只包含十六进制字符
+    final cleanContent = content.replaceAll(RegExp(r'\s'), '');
+    if (cleanContent.isEmpty) return false;
+    
+    // 检查是否只包含十六进制字符
+    return RegExp(r'^[0-9a-fA-F]+$').hasMatch(cleanContent);
+  }
+
+  /// 提取所有尖括号内容（不限于十六进制）
+  static String extractBracketContent(String input) {
+    if (input.isEmpty) return '';
+    
+    final regex = RegExp(r'<([^>]+)>');
+    final matches = regex.allMatches(input);
+    
+    final contentList = matches.map((m) => m.group(1) ?? '').where((s) => s.isNotEmpty).toList();
+    
+    return contentList.join('\n');
+  }
 }
 
