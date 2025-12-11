@@ -1,4 +1,4 @@
-import 'package:ble_tool/ui_utils.dart';
+import 'package:ble_tool/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -20,21 +20,21 @@ abstract mixin class AppBaseScreen {
 
   Widget? titleWidget;
 
-  bool navigatorBottomLine = true;
+  bool navigatorBottomLine = false;
 
   List<Widget>? navigatorRightWidget;
 
   // 背景色
-  Color backgroundColor = Color(0xFFF4F4F4);
+  Color backgroundColor = AppTheme.scaffoldBackground;
 
-  Color appBarBackgroundColor = Color(0xFF00C87E);
+  Color appBarBackgroundColor = AppTheme.appBarBackground;
 
   // 是否隐藏appBar
   bool hiddeAppBar = false;
 
   bool extendBodyBehindAppBar = false;
 
-  // 返回按钮的颜色
+  // 返回按钮的样式
   AppBackArrowStyle backArrowStyle = AppBackArrowStyle.styleGoBack;
 
   AppStatusBarStyle statusBarStyle = AppStatusBarStyle.light;
@@ -44,48 +44,44 @@ abstract mixin class AppBaseScreen {
 
   // 自定义app bar
   PreferredSizeWidget? appBar;
+  
   PreferredSizeWidget? defaultAppBar() {
     if (hiddeAppBar) return null;
     return AppBar(
       backgroundColor: appBarBackgroundColor,
       surfaceTintColor: Colors.transparent,
+      elevation: 0,
       bottom: navigatorBottomLine
           ? PreferredSize(
-              preferredSize: const Size.fromHeight(1.0), // 下划线的高度
+              preferredSize: const Size.fromHeight(1.0),
               child: Container(
-                color: Colors.grey.withOpacity(0.1), // 下划线颜色
-                height: 1.0, // 下划线高度
+                color: AppTheme.dividerColor,
+                height: 1.0,
               ),
             )
           : null,
-      flexibleSpace: Center(
-        child: SafeArea(
-          child: titleWidget ??
-              Text(
-                pageTitle,
-                style: const TextStyle(
-                  color: Color(0xFF181818),
-                  fontSize: 52 / 3,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-        ),
-      ),
-      // title: Text(
-      //   pageTitle,
-      //   style: const TextStyle(
-      //     color: Color(0xFF181818),
-      //     fontSize: 52 / 3,
-      //     fontWeight: FontWeight.w500,
-      //   ),
-      // ),
+      centerTitle: true,
+      title: titleWidget ??
+          Text(
+            pageTitle,
+            style: const TextStyle(
+              color: AppTheme.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+          ),
       leading: IconButton(
-        icon: backArrowStyle == AppBackArrowStyle.styleGoBack
-            ? Png.name('icon_back_grey', width: 72 / 3)
-            : Png.name('icon_close_grey', width: 72 / 3),
+        icon: Icon(
+          backArrowStyle == AppBackArrowStyle.styleGoBack
+              ? Icons.arrow_back_ios_new_rounded
+              : Icons.close_rounded,
+          color: AppTheme.textPrimary,
+          size: 22,
+        ),
         style: IconButton.styleFrom(
           minimumSize: Size.zero,
-          padding: EdgeInsets.zero,
+          padding: const EdgeInsets.all(8),
         ),
         onPressed: () {
           if (onBackClick != null) {
@@ -96,24 +92,6 @@ abstract mixin class AppBaseScreen {
       actions: navigatorRightWidget,
     );
   }
-
-  // setStatusBarStyle() {
-  //   if (statusBarStyle == AppStatusBarStyle.light) {
-  //     SystemChrome.setSystemUIOverlayStyle(
-  //       const SystemUiOverlayStyle(
-  //         statusBarIconBrightness: Brightness.light,
-  //         statusBarBrightness: Brightness.light, // 设置状态栏亮度（针对 iOS）
-  //       ),
-  //     );
-  //   } else {
-  //     SystemChrome.setSystemUIOverlayStyle(
-  //       const SystemUiOverlayStyle(
-  //         statusBarIconBrightness: Brightness.dark,
-  //         statusBarBrightness: Brightness.dark, // 设置状态栏亮度（针对 iOS）
-  //       ),
-  //     );
-  //   }
-  // }
 }
 
 abstract class AppBaseStatefulPage extends StatefulWidget {
@@ -124,7 +102,6 @@ abstract class AppBaseStatefulPageState<Page extends AppBaseStatefulPage>
     extends State<Page> with AppBaseScreen {
   @override
   Widget build(BuildContext context) {
-    print("当前页面类型: ${context.widget.runtimeType}");
     return AnnotatedRegion(
       value: statusBarStyle == AppStatusBarStyle.light
           ? SystemUiOverlayStyle.light.copyWith(
@@ -143,5 +120,4 @@ abstract class AppBaseStatefulPageState<Page extends AppBaseStatefulPage>
   }
 
   Widget body(BuildContext context);
-
 }

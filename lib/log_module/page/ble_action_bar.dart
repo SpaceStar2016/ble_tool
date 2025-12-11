@@ -1,13 +1,12 @@
 import 'package:ble_tool/main.dart';
 import 'package:ble_tool/log_module/model/ble_log.dart';
 import 'package:ble_tool/log_module/provider/log_provider.dart';
+import 'package:ble_tool/theme/app_theme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-
 class BleActionBar extends StatefulWidget {
-
   final ValueNotifier<bool> canSave;
 
   const BleActionBar({super.key, required this.canSave});
@@ -19,43 +18,85 @@ class BleActionBar extends StatefulWidget {
 class _BleActionBarState extends State<BleActionBar> {
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(width: 20),
-        GestureDetector(
-          onTap: () {
-            final provider = Provider.of<LogProvider>(context, listen: false);
-            provider.updateRowData();
-          },
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Color(0xFFD6F7EB),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Text("生成行", style: TextStyle(fontSize: 24)),
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.spacingMedium,
+        vertical: AppTheme.spacingSmall,
+      ),
+      child: Row(
+        children: [
+          _buildActionButton(
+            icon: Icons.auto_awesome_rounded,
+            label: '生成行',
+            onTap: () {
+              final provider = Provider.of<LogProvider>(context, listen: false);
+              provider.updateRowData();
+            },
           ),
-        ),
-        SizedBox(width: 20),
-        GestureDetector(
-          onTap: () async {
-          },
-          child: ValueListenableBuilder(
+          const SizedBox(width: AppTheme.spacingMedium),
+          ValueListenableBuilder(
             valueListenable: widget.canSave,
             builder: (context, value, child) {
-              return Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Color(0xFFD6F7EB),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Text("保存", style: value ? TextStyle(fontSize: 24) : TextStyle(fontSize: 24, color: Colors.grey)),
+              return _buildActionButton(
+                icon: Icons.save_rounded,
+                label: '保存',
+                enabled: value,
+                onTap: () async {
+                  // 保存逻辑
+                },
               );
             },
           ),
+          const Spacer(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool enabled = true,
+  }) {
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: enabled ? AppTheme.primaryGradient : null,
+          color: enabled ? null : AppTheme.surfaceColor,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+          boxShadow: enabled
+              ? [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withOpacity(0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
-        Spacer(),
-      ],
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: enabled ? AppTheme.textPrimary : AppTheme.textDisabled,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: enabled ? AppTheme.textPrimary : AppTheme.textDisabled,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

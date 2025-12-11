@@ -1,25 +1,31 @@
+import 'package:ble_tool/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class OraDialog extends StatelessWidget {
-  static TextStyle titleStyle = TextStyle(
-      fontSize: 56 / 3,
-      fontWeight: FontWeight.w500,
-      color: Colors.black);
-  static TextStyle messageStyle = TextStyle(
-      fontSize: 44 / 3,
-      fontWeight: FontWeight.w400,
-      color: const Color(0xFF383C47));
+  static TextStyle titleStyle = const TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: AppTheme.textPrimary,
+  );
+  
+  static TextStyle messageStyle = const TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    color: AppTheme.textSecondary,
+  );
 
-  static TextStyle leftButtonStyle = TextStyle(
-      fontSize: 48 / 3,
-      fontWeight: FontWeight.w500,
-      color: Colors.black.withOpacity(0.5));
+  static TextStyle leftButtonStyle = const TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    color: AppTheme.textSecondary,
+  );
 
-  static TextStyle rightButtonStyle = TextStyle(
-      fontSize: 48 / 3,
-      fontWeight: FontWeight.w500,
-      color: const Color(0xFF444957));
+  static TextStyle rightButtonStyle = const TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: AppTheme.primaryColor,
+  );
 
   final String? leftButtonText;
   final VoidCallback? leftButtonOnPressed;
@@ -37,7 +43,7 @@ class OraDialog extends StatelessWidget {
     this.rightButtonText,
     this.rightButtonOnPressed,
     this.insetPadding,
-    this.attractiveColor = Colors.black,
+    this.attractiveColor = AppTheme.primaryColor,
     this.backgroundColor,
     required this.child,
   });
@@ -56,14 +62,14 @@ class OraDialog extends StatelessWidget {
         leftButtonOnPressed: leftButtonOnPressed,
         rightButtonText: rightButtonText,
         rightButtonOnPressed: rightButtonOnPressed,
-        attractiveColor: attractiveColor ?? Colors.black,
+        attractiveColor: attractiveColor ?? AppTheme.primaryColor,
         child: Flexible(
           child: SingleChildScrollView(
             child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: 210.h),
+              constraints: BoxConstraints(minHeight: 70.h),
               child: Padding(
                 padding: EdgeInsets.only(
-                    top: 84.w, bottom: 84.w, right: 72.w, left: 72.w),
+                    top: 28.w, bottom: 28.w, right: 24.w, left: 24.w),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -71,7 +77,7 @@ class OraDialog extends StatelessWidget {
                     title == null
                         ? null
                         : Padding(
-                            padding: EdgeInsets.only(bottom: 20.w),
+                            padding: EdgeInsets.only(bottom: 12.w),
                             child: Text(
                               title ?? '',
                               textAlign: TextAlign.center,
@@ -102,9 +108,9 @@ class OraDialog extends StatelessWidget {
         leftButtonOnPressed: leftButtonOnPressed,
         rightButtonText: rightButtonText,
         rightButtonOnPressed: rightButtonOnPressed,
-        attractiveColor: attractiveColor ?? Colors.black,
+        attractiveColor: attractiveColor ?? AppTheme.primaryColor,
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 80.h, horizontal: 80.w),
+          padding: EdgeInsets.symmetric(vertical: 26.h, horizontal: 26.w),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -112,7 +118,7 @@ class OraDialog extends StatelessWidget {
               icon,
               message != null
                   ? SizedBox(
-                      height: 40.w,
+                      height: 14.w,
                     )
                   : null,
               message != null
@@ -125,7 +131,7 @@ class OraDialog extends StatelessWidget {
                   : null,
               message != null
                   ? SizedBox(
-                      height: 40.w,
+                      height: 14.w,
                     )
                   : null,
             ].where((e) => e != null)),
@@ -146,37 +152,35 @@ class OraDialog extends StatelessWidget {
         leftButtonOnPressed: leftButtonOnPressed,
         rightButtonText: rightButtonText,
         rightButtonOnPressed: rightButtonOnPressed,
-        attractiveColor: attractiveColor ?? Colors.black,
+        attractiveColor: attractiveColor ?? AppTheme.primaryColor,
         child: child,
       );
 
   @override
   Widget build(BuildContext context) {
-    TextStyle titleStyle =
-        TextStyle(fontSize: 44 / 3, color: const Color(0xFF8F8F8F));
     return Dialog(
-      backgroundColor: backgroundColor ?? Colors.white,
+      backgroundColor: backgroundColor ?? AppTheme.cardBackground,
       surfaceTintColor: Colors.transparent,
       insetPadding:
-          insetPadding ?? EdgeInsets.symmetric(horizontal: 88.w, vertical: 40),
+          insetPadding ?? EdgeInsets.symmetric(horizontal: 30.w, vertical: 40),
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(48.w))),
+          borderRadius: BorderRadius.all(Radius.circular(AppTheme.radiusLarge))),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: List<Widget>.from([
           child,
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.cardBackground,
               borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(40.w),
-                  bottomRight: Radius.circular(40.w)),
+                  bottomLeft: Radius.circular(AppTheme.radiusLarge),
+                  bottomRight: Radius.circular(AppTheme.radiusLarge)),
             ),
             child: Column(
               children: [
                 Divider(
-                  color: const Color(0xFF3D3D3D).withOpacity(0.08),
-                  height: 2.h,
+                  color: AppTheme.dividerColor,
+                  height: 1.h,
                 ),
                 Row(
                   children: List<Widget>.from([
@@ -184,10 +188,10 @@ class OraDialog extends StatelessWidget {
                         ? null
                         : Expanded(
                             child: SizedBox(
-                              height: 138.h,
+                              height: 50.h,
                               child: TextButton(
                                   style: TextButton.styleFrom(
-                                    fixedSize: Size.fromHeight(138.h),
+                                    fixedSize: Size.fromHeight(50.h),
                                     padding: EdgeInsets.zero,
                                   ),
                                   onPressed: () => leftButtonOnPressed?.call(),
@@ -199,18 +203,18 @@ class OraDialog extends StatelessWidget {
                     leftButtonText == null
                         ? null
                         : Container(
-                            width: 2.w,
-                            height: 138.h,
-                            color: const Color(0xFF3D3D3D).withOpacity(0.08),
+                            width: 1.w,
+                            height: 50.h,
+                            color: AppTheme.dividerColor,
                           ),
                     rightButtonText == null
                         ? null
                         : Expanded(
                             child: SizedBox(
-                              height: 138.h,
+                              height: 50.h,
                               child: TextButton(
                                   style: TextButton.styleFrom(
-                                    fixedSize: Size.fromHeight(138.h),
+                                    fixedSize: Size.fromHeight(50.h),
                                     padding: EdgeInsets.zero,
                                   ),
                                   onPressed: () => rightButtonOnPressed?.call(),
@@ -228,6 +232,4 @@ class OraDialog extends StatelessWidget {
       ),
     );
   }
-
 }
-

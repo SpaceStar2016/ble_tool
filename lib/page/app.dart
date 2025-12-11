@@ -1,4 +1,5 @@
 import 'package:ble_tool/log_module/provider/log_provider.dart';
+import 'package:ble_tool/theme/app_theme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -23,11 +24,10 @@ class _AppState extends State<App> {
           splitScreenMode: true,
         builder: (context,child) {
           return MaterialApp(
-            title: 'Flutter Demo',
-            theme: ThemeData(
-              // colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-            ),
-            home: Scaffold(body: MainPage()),
+            title: 'BLE Tool',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.darkTheme,
+            home: const MainPage(),
           );
         }
       ),

@@ -1,24 +1,19 @@
+import 'package:ble_tool/theme/app_theme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../model/byte_item_model.dart';
 
-
-
 class ByteItem extends StatefulWidget {
+  final ByteItemModel item;
 
-  final ByteItemModel item ;
-
-  const ByteItem({super.key,required this.item});
+  const ByteItem({super.key, required this.item});
 
   @override
   State<ByteItem> createState() => _ByteItemState();
-
-
 }
 
 class _ByteItemState extends State<ByteItem> {
-
   String hexText = "";
   String binaryText = "";
   bool isHex = true;
@@ -28,30 +23,80 @@ class _ByteItemState extends State<ByteItem> {
     super.initState();
   }
 
-
   @override
   Widget build(BuildContext context) {
     hexText = widget.item.data;
     binaryText = hexToBinary(hexText);
     return ConstrainedBox(
-      constraints: BoxConstraints(minWidth: 80,maxWidth: 120),
+      constraints: const BoxConstraints(minWidth: 80, maxWidth: 120),
       child: GestureDetector(
-        onTap: (){
+        onTap: () {
           setState(() {
             isHex = !isHex;
           });
         },
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 4,vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: BoxDecoration(
-            color: Color(0xFFD6F7EB),
-            borderRadius: BorderRadius.circular(18),
+            color: AppTheme.cardBackground,
+            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            border: Border.all(
+              color: isHex 
+                  ? AppTheme.primaryColor.withOpacity(0.5) 
+                  : AppTheme.accentColor.withOpacity(0.5),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: (isHex ? AppTheme.primaryColor : AppTheme.accentColor)
+                    .withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
             children: [
-              Text(isHex ? hexText : binaryText),
-              Divider(color: Colors.grey.withAlpha(50),),
-              Text("${widget.item.index}"),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isHex ? Icons.hexagon_outlined : Icons.memory_rounded,
+                    size: 12,
+                    color: isHex ? AppTheme.primaryColor : AppTheme.accentColor,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    isHex ? 'HEX' : 'BIN',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: isHex ? AppTheme.primaryColor : AppTheme.accentColor,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                isHex ? hexText : binaryText,
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 13,
+                  fontFamily: 'monospace',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Divider(
+                color: AppTheme.dividerColor.withOpacity(0.5),
+                height: 12,
+              ),
+              Text(
+                "${widget.item.index}",
+                style: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
             ],
           ),
         ),
