@@ -1,4 +1,5 @@
 import 'package:ble_tool/base64_module/page/base64_convert_page.dart';
+import 'package:ble_tool/json_module/page/json_tool_page.dart';
 import 'package:ble_tool/log_module/page/log_list_page.dart';
 import 'package:ble_tool/theme/app_theme.dart';
 import 'package:flutter/material.dart';
@@ -105,7 +106,12 @@ class _MainPageState extends State<MainPage> {
                       colors: [Color(0xFFBF5AF2), Color(0xFFFF6482)],
                     ),
                     onTap: () {
-                      // TODO: 跳转到 JSON 工具页面
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const JsonToolPage(),
+                        ),
+                      );
                     },
                   ),
                   _buildToolCard(
