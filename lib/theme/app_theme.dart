@@ -217,7 +217,7 @@ class AppTheme {
       backgroundColor: primaryColor,
       foregroundColor: textPrimary,
     ),
-    
+
   );
 }
 

@@ -1,3 +1,4 @@
+import 'package:ble_tool/base64_module/page/base64_convert_page.dart';
 import 'package:ble_tool/log_module/page/log_list_page.dart';
 import 'package:ble_tool/theme/app_theme.dart';
 import 'package:flutter/material.dart';
@@ -86,7 +87,12 @@ class _MainPageState extends State<MainPage> {
                     subtitle: '编码解码工具',
                     gradient: AppTheme.accentGradient,
                     onTap: () {
-                      // TODO: 跳转到Base64转换页面
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const Base64ConvertPage(),
+                        ),
+                      );
                     },
                   ),
                   _buildToolCard(
