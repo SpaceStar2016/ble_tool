@@ -1,6 +1,5 @@
-import 'dart:convert';
-
 import 'package:ble_tool/app_base_page.dart';
+import 'package:ble_tool/base64_module/util/base64_util.dart';
 import 'package:ble_tool/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -40,30 +39,22 @@ class _Base64ConvertPageState extends AppBaseStatefulPageState<Base64ConvertPage
       return;
     }
 
-    try {
-      if (_isDecoding) {
-        // Base64 -> Hex
-        final bytes = base64Decode(input);
-        _result = bytes.map((b) => b.toRadixString(16).padLeft(2, '0').toUpperCase()).join(' ');
+    final Base64Result result;
+    if (_isDecoding) {
+      result = Base64Util.base64ToHex(input);
+    } else {
+      result = Base64Util.hexToBase64(input);
+    }
+
+    setState(() {
+      if (result.isSuccess) {
+        _result = result.data ?? '';
         _errorMessage = '';
       } else {
-        // Hex -> Base64
-        final hexString = input.replaceAll(RegExp(r'\s+'), '');
-        if (hexString.length % 2 != 0) {
-          throw FormatException('Hex长度必须为偶数');
-        }
-        final bytes = <int>[];
-        for (var i = 0; i < hexString.length; i += 2) {
-          bytes.add(int.parse(hexString.substring(i, i + 2), radix: 16));
-        }
-        _result = base64Encode(bytes);
-        _errorMessage = '';
+        _result = '';
+        _errorMessage = result.errorMessage ?? '转换失败';
       }
-    } catch (e) {
-      _result = '';
-      _errorMessage = _isDecoding ? '无效的 Base64 字符串' : '无效的 Hex 字符串';
-    }
-    setState(() {});
+    });
   }
 
   void _copyResult() {
@@ -553,4 +544,3 @@ class _Base64ConvertPageState extends AppBaseStatefulPageState<Base64ConvertPage
     );
   }
 }
-

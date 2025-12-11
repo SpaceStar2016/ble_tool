@@ -1,6 +1,7 @@
 import 'package:ble_tool/base64_module/page/base64_convert_page.dart';
 import 'package:ble_tool/json_module/page/json_tool_page.dart';
 import 'package:ble_tool/log_module/page/log_list_page.dart';
+import 'package:ble_tool/string_module/page/string_diff_page.dart';
 import 'package:ble_tool/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -115,16 +116,21 @@ class _MainPageState extends State<MainPage> {
                     },
                   ),
                   _buildToolCard(
-                    icon: Icons.build_circle_outlined,
-                    title: '其他工具',
-                    subtitle: '更多实用功能',
+                    icon: Icons.compare_arrows_rounded,
+                    title: '字符串对比',
+                    subtitle: '差异对比分析',
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [Color(0xFFFF9F0A), Color(0xFFFFCC00)],
                     ),
                     onTap: () {
-                      // TODO: 跳转到其他工具页面
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const StringDiffPage(),
+                        ),
+                      );
                     },
                   ),
                 ],
