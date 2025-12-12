@@ -1,4 +1,5 @@
 import 'package:ble_tool/app_base_page.dart';
+import 'package:ble_tool/json_module/page/json_result_page.dart';
 import 'package:ble_tool/json_module/util/json_util.dart';
 import 'package:ble_tool/theme/app_theme.dart';
 import 'package:flutter/material.dart';
@@ -673,7 +674,36 @@ class _JsonToolPageState extends AppBaseStatefulPageState<JsonToolPage> {
               ),
             ),
           ],
+          const SizedBox(width: 8),
+          // 全屏查看按钮
+          GestureDetector(
+            onTap: _openFullScreenResult,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+              ),
+              child: const Icon(
+                Icons.fullscreen_rounded,
+                size: 18,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  void _openFullScreenResult() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => JsonResultPage(
+          result: _result,
+          hasError: _errorMessage.isNotEmpty,
+        ),
       ),
     );
   }
