@@ -16,11 +16,25 @@ class LogListPage extends AppBaseStatefulPage {
 }
 
 class _LogPageState extends AppBaseStatefulPageState<LogListPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchKeyword = '';
+  bool _isSearching = false;
+
   @override
   String get pageTitle => '日志记录';
 
   @override
   List<Widget>? get navigatorRightWidget => [
+        // 搜索按钮
+        IconButton(
+          icon: Icon(
+            _isSearching ? Icons.close_rounded : Icons.search_rounded,
+            color: AppTheme.primaryColor,
+            size: 24,
+          ),
+          onPressed: _toggleSearch,
+        ),
+        // 添加按钮
         IconButton(
           icon: const Icon(
             Icons.add_rounded,
@@ -30,6 +44,31 @@ class _LogPageState extends AppBaseStatefulPageState<LogListPage> {
           onPressed: () => _navigateToEditPage(),
         ),
       ];
+
+  void _toggleSearch() {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (!_isSearching) {
+        _searchController.clear();
+        _searchKeyword = '';
+      }
+    });
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {
+      _searchKeyword = value.trim().toLowerCase();
+    });
+  }
+
+  List<BleLog> _filterLogs(List<BleLog> logs) {
+    if (_searchKeyword.isEmpty) return logs;
+    
+    return logs.where((log) {
+      final remark = log.remark?.toLowerCase() ?? '';
+      return remark.contains(_searchKeyword);
+    }).toList();
+  }
 
   void _navigateToEditPage({BleLog? bleLog}) async {
     final result = await Navigator.push<bool>(
@@ -50,21 +89,100 @@ class _LogPageState extends AppBaseStatefulPageState<LogListPage> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget body(BuildContext context) {
     return Consumer<LogProvider>(builder: (context, bleProvider, child) {
-      return bleProvider.logs.isEmpty
-          ? _noDataView("暂无日志数据")
-          : ListView.separated(
-              padding: const EdgeInsets.all(AppTheme.spacingMedium),
-              itemCount: bleProvider.logs.length,
-              separatorBuilder: (ctx, index) =>
-                  const SizedBox(height: AppTheme.spacingSmall),
-              itemBuilder: (ctx, index) {
-                final log = bleProvider.logs[index];
-                return _buildSwipeableLogItem(log);
-              },
-            );
+      final filteredLogs = _filterLogs(bleProvider.logs);
+      
+      return Column(
+        children: [
+          // 搜索框
+          if (_isSearching) _buildSearchBar(),
+          
+          // 日志列表
+          Expanded(
+            child: filteredLogs.isEmpty
+                ? _noDataView(_searchKeyword.isEmpty ? "暂无日志数据" : "未找到匹配的日志")
+                : ListView.separated(
+                    padding: const EdgeInsets.all(AppTheme.spacingMedium),
+                    itemCount: filteredLogs.length,
+                    separatorBuilder: (ctx, index) =>
+                        const SizedBox(height: AppTheme.spacingSmall),
+                    itemBuilder: (ctx, index) {
+                      final log = filteredLogs[index];
+                      return _buildSwipeableLogItem(log);
+                    },
+                  ),
+          ),
+        ],
+      );
     });
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.spacingMedium,
+        vertical: AppTheme.spacingSmall,
+      ),
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground,
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.dividerColor.withOpacity(0.5),
+          ),
+        ),
+      ),
+      child: TextField(
+        controller: _searchController,
+        autofocus: true,
+        style: const TextStyle(
+          color: AppTheme.textPrimary,
+          fontSize: 15,
+        ),
+        decoration: InputDecoration(
+          hintText: '搜索备注...',
+          hintStyle: const TextStyle(
+            color: AppTheme.textHint,
+            fontSize: 15,
+          ),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: AppTheme.textHint,
+            size: 20,
+          ),
+          suffixIcon: _searchKeyword.isNotEmpty
+              ? GestureDetector(
+                  onTap: () {
+                    _searchController.clear();
+                    _onSearchChanged('');
+                  },
+                  child: const Icon(
+                    Icons.clear_rounded,
+                    color: AppTheme.textHint,
+                    size: 20,
+                  ),
+                )
+              : null,
+          filled: true,
+          fillColor: AppTheme.surfaceColor,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppTheme.spacingMedium,
+            vertical: AppTheme.spacingSmall,
+          ),
+        ),
+        onChanged: _onSearchChanged,
+      ),
+    );
   }
 
   Widget _buildSwipeableLogItem(BleLog log) {
