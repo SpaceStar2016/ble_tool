@@ -749,10 +749,10 @@ class _JsonToolPageState extends AppBaseStatefulPageState<JsonToolPage> {
           child: SingleChildScrollView(
             controller: _resultScrollController,
             padding: const EdgeInsets.all(AppTheme.spacingMedium),
-            child: hasError 
-                ? _buildErrorHighlightedText() 
-                : _searchKeyword.isNotEmpty
-                    ? _buildSearchHighlightedText()
+            child: _searchKeyword.isNotEmpty
+                ? _buildSearchHighlightedText() // 搜索时优先显示搜索高亮
+                : hasError 
+                    ? _buildErrorHighlightedText() 
                     : SelectableText(
                         _result,
                         style: const TextStyle(
