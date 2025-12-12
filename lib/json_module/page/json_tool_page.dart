@@ -13,9 +13,16 @@ class JsonToolPage extends AppBaseStatefulPage {
 
 class _JsonToolPageState extends AppBaseStatefulPageState<JsonToolPage> {
   final TextEditingController _inputController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  final ScrollController _resultScrollController = ScrollController();
   String _result = '';
   String _errorMessage = '';
   bool _isValid = false;
+  String _searchKeyword = '';
+  bool _isSearching = false;
+  int _matchCount = 0;
+  int _currentMatchIndex = 0; // 当前匹配索引（从0开始）
+  List<int> _matchPositions = []; // 所有匹配位置
 
   @override
   String get pageTitle => 'JSON 工具';
@@ -26,7 +33,103 @@ class _JsonToolPageState extends AppBaseStatefulPageState<JsonToolPage> {
   @override
   void dispose() {
     _inputController.dispose();
+    _searchController.dispose();
+    _resultScrollController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {
+      _searchKeyword = value;
+      _matchPositions = _findAllMatchPositions();
+      _matchCount = _matchPositions.length;
+      _currentMatchIndex = _matchCount > 0 ? 0 : -1;
+    });
+    // 自动滚动到第一个匹配
+    if (_matchCount > 0) {
+      _scrollToCurrentMatch();
+    }
+  }
+
+  List<int> _findAllMatchPositions() {
+    if (_searchKeyword.isEmpty || _result.isEmpty) return [];
+    final positions = <int>[];
+    final lowerResult = _result.toLowerCase();
+    final lowerKeyword = _searchKeyword.toLowerCase();
+    int index = 0;
+    while ((index = lowerResult.indexOf(lowerKeyword, index)) != -1) {
+      positions.add(index);
+      index += lowerKeyword.length;
+    }
+    return positions;
+  }
+
+  int _countMatches() {
+    if (_searchKeyword.isEmpty || _result.isEmpty) return 0;
+    final lowerResult = _result.toLowerCase();
+    final lowerKeyword = _searchKeyword.toLowerCase();
+    int count = 0;
+    int index = 0;
+    while ((index = lowerResult.indexOf(lowerKeyword, index)) != -1) {
+      count++;
+      index += lowerKeyword.length;
+    }
+    return count;
+  }
+
+  void _toggleSearch() {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (!_isSearching) {
+        _searchController.clear();
+        _searchKeyword = '';
+        _matchCount = 0;
+        _currentMatchIndex = -1;
+        _matchPositions = [];
+      }
+    });
+  }
+
+  void _goToPreviousMatch() {
+    if (_matchCount == 0) return;
+    setState(() {
+      _currentMatchIndex = (_currentMatchIndex - 1 + _matchCount) % _matchCount;
+    });
+    _scrollToCurrentMatch();
+  }
+
+  void _goToNextMatch() {
+    if (_matchCount == 0) return;
+    setState(() {
+      _currentMatchIndex = (_currentMatchIndex + 1) % _matchCount;
+    });
+    _scrollToCurrentMatch();
+  }
+
+  void _scrollToCurrentMatch() {
+    if (_currentMatchIndex < 0 || _matchPositions.isEmpty) return;
+    
+    // 计算当前匹配所在行
+    final matchPos = _matchPositions[_currentMatchIndex];
+    final textBeforeMatch = _result.substring(0, matchPos);
+    final lineNumber = '\n'.allMatches(textBeforeMatch).length;
+    
+    // 估算每行高度（字体大小13 * 行高1.5）
+    const lineHeight = 13.0 * 1.5;
+    final scrollOffset = lineNumber * lineHeight;
+    
+    // 滚动到对应位置
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_resultScrollController.hasClients) {
+        final maxScroll = _resultScrollController.position.maxScrollExtent;
+        final targetOffset = scrollOffset.clamp(0.0, maxScroll);
+        _resultScrollController.animateTo(
+          targetOffset,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   void _validateJson() {
@@ -391,7 +494,7 @@ class _JsonToolPageState extends AppBaseStatefulPageState<JsonToolPage> {
   }
 
   Widget _buildResultArea() {
-    final hasError = _errorMessage.isNotEmpty && _result.isEmpty;
+    final hasError = _errorMessage.isNotEmpty;
     final hasResult = _result.isNotEmpty;
 
     return Container(
@@ -409,7 +512,169 @@ class _JsonToolPageState extends AppBaseStatefulPageState<JsonToolPage> {
           width: 1,
         ),
       ),
-      child: hasResult ? _buildResultContent() : _buildEmptyContent(),
+      child: Column(
+        children: [
+          // 搜索栏（仅在有结果时显示）
+          if (hasResult) _buildSearchBar(),
+          // 结果内容
+          hasResult 
+              ? _buildResultContent(hasError: hasError) 
+              : _buildEmptyContent(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.spacingSmall,
+        vertical: AppTheme.spacingXSmall,
+      ),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.dividerColor.withOpacity(0.5),
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // 搜索图标/按钮
+          GestureDetector(
+            onTap: _toggleSearch,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: _isSearching 
+                    ? AppTheme.primaryColor.withOpacity(0.15) 
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+              ),
+              child: Icon(
+                _isSearching ? Icons.close_rounded : Icons.search_rounded,
+                size: 18,
+                color: _isSearching ? AppTheme.primaryColor : AppTheme.textHint,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // 搜索输入框
+          Expanded(
+            child: _isSearching
+                ? TextField(
+                    controller: _searchController,
+                    autofocus: true,
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 13,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: '搜索...',
+                      hintStyle: const TextStyle(
+                        color: AppTheme.textHint,
+                        fontSize: 13,
+                      ),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                      suffixIcon: _searchKeyword.isNotEmpty
+                          ? GestureDetector(
+                              onTap: () {
+                                _searchController.clear();
+                                _onSearchChanged('');
+                              },
+                              child: const Icon(
+                                Icons.clear_rounded,
+                                size: 16,
+                                color: AppTheme.textHint,
+                              ),
+                            )
+                          : null,
+                    ),
+                    onChanged: _onSearchChanged,
+                  )
+                : GestureDetector(
+                    onTap: _toggleSearch,
+                    child: const Text(
+                      '点击搜索结果...',
+                      style: TextStyle(
+                        color: AppTheme.textHint,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+          ),
+          // 导航按钮和匹配数量
+          if (_isSearching && _searchKeyword.isNotEmpty) ...[
+            // 向上按钮
+            GestureDetector(
+              onTap: _matchCount > 0 ? _goToPreviousMatch : null,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: _matchCount > 0
+                      ? AppTheme.primaryColor.withOpacity(0.1)
+                      : AppTheme.surfaceColor,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Icon(
+                  Icons.keyboard_arrow_up_rounded,
+                  size: 20,
+                  color: _matchCount > 0
+                      ? AppTheme.primaryColor
+                      : AppTheme.textHint,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            // 向下按钮
+            GestureDetector(
+              onTap: _matchCount > 0 ? _goToNextMatch : null,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: _matchCount > 0
+                      ? AppTheme.primaryColor.withOpacity(0.1)
+                      : AppTheme.surfaceColor,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 20,
+                  color: _matchCount > 0
+                      ? AppTheme.primaryColor
+                      : AppTheme.textHint,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // 匹配数量显示
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _matchCount > 0
+                    ? AppTheme.accentColor.withOpacity(0.15)
+                    : AppTheme.errorColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+              ),
+              child: Text(
+                _matchCount > 0
+                    ? '${_currentMatchIndex + 1}/$_matchCount'
+                    : '0 匹配',
+                style: TextStyle(
+                  color: _matchCount > 0
+                      ? AppTheme.accentColor
+                      : AppTheme.errorColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -438,20 +703,65 @@ class _JsonToolPageState extends AppBaseStatefulPageState<JsonToolPage> {
     );
   }
 
-  Widget _buildResultContent() {
+  Widget _buildResultContent({bool hasError = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.all(AppTheme.spacingMedium),
-          child: SelectableText(
-            _result,
-            style: const TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 13,
-              fontFamily: 'monospace',
-              height: 1.5,
+        // 如果有错误，显示错误提示标签
+        if (hasError)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.spacingMedium,
+              vertical: AppTheme.spacingSmall,
             ),
+            decoration: BoxDecoration(
+              color: AppTheme.errorColor.withOpacity(0.1),
+              border: Border(
+                bottom: BorderSide(
+                  color: AppTheme.errorColor.withOpacity(0.3),
+                ),
+              ),
+            ),
+            child: const Row(
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  size: 16,
+                  color: AppTheme.errorColor,
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'JSON 格式有误，已尝试展开并标记错误位置',
+                    style: TextStyle(
+                      color: AppTheme.errorColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 300),
+          child: SingleChildScrollView(
+            controller: _resultScrollController,
+            padding: const EdgeInsets.all(AppTheme.spacingMedium),
+            child: hasError 
+                ? _buildErrorHighlightedText() 
+                : _searchKeyword.isNotEmpty
+                    ? _buildSearchHighlightedText()
+                    : SelectableText(
+                        _result,
+                        style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 13,
+                          fontFamily: 'monospace',
+                          height: 1.5,
+                        ),
+                      ),
           ),
         ),
         Container(
@@ -475,63 +785,69 @@ class _JsonToolPageState extends AppBaseStatefulPageState<JsonToolPage> {
               ),
               Row(
                 children: [
-                  GestureDetector(
-                    onTap: _applyResult,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceColor,
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusSmall),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.arrow_upward_rounded,
-                            size: 14,
-                            color: AppTheme.primaryColor,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            '应用',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                  if (!hasError)
+                    GestureDetector(
+                      onTap: _applyResult,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceColor,
+                          borderRadius:
+                              BorderRadius.circular(AppTheme.radiusSmall),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.arrow_upward_rounded,
+                              size: 14,
                               color: AppTheme.primaryColor,
                             ),
-                          ),
-                        ],
+                            SizedBox(width: 4),
+                            Text(
+                              '应用',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: AppTheme.spacingSmall),
+                  if (!hasError) const SizedBox(width: AppTheme.spacingSmall),
                   GestureDetector(
                     onTap: _copyResult,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        gradient: AppTheme.accentGradient,
+                        gradient: hasError ? null : AppTheme.accentGradient,
+                        color: hasError ? AppTheme.surfaceColor : null,
                         borderRadius:
                             BorderRadius.circular(AppTheme.radiusSmall),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             Icons.copy_rounded,
                             size: 14,
-                            color: AppTheme.textPrimary,
+                            color: hasError 
+                                ? AppTheme.textSecondary 
+                                : AppTheme.textPrimary,
                           ),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           Text(
                             '复制',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.textPrimary,
+                              color: hasError 
+                                  ? AppTheme.textSecondary 
+                                  : AppTheme.textPrimary,
                             ),
                           ),
                         ],
@@ -544,6 +860,138 @@ class _JsonToolPageState extends AppBaseStatefulPageState<JsonToolPage> {
           ),
         ),
       ],
+    );
+  }
+
+  /// 构建带有搜索高亮的文本
+  Widget _buildSearchHighlightedText() {
+    if (_searchKeyword.isEmpty) {
+      return SelectableText(
+        _result,
+        style: const TextStyle(
+          color: AppTheme.textPrimary,
+          fontSize: 13,
+          fontFamily: 'monospace',
+          height: 1.5,
+        ),
+      );
+    }
+
+    final spans = <TextSpan>[];
+    final lowerResult = _result.toLowerCase();
+    final lowerKeyword = _searchKeyword.toLowerCase();
+    int lastEnd = 0;
+    int matchIndex = 0;
+
+    int index = 0;
+    while ((index = lowerResult.indexOf(lowerKeyword, lastEnd)) != -1) {
+      // 添加匹配前的普通文本
+      if (index > lastEnd) {
+        spans.add(TextSpan(
+          text: _result.substring(lastEnd, index),
+          style: const TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 13,
+            fontFamily: 'monospace',
+            height: 1.5,
+          ),
+        ));
+      }
+
+      // 判断是否为当前选中的匹配
+      final isCurrentMatch = matchIndex == _currentMatchIndex;
+
+      // 添加高亮匹配文本
+      // 当前匹配：橙红色背景 + 白色文字（最醒目）
+      // 其他匹配：亮黄色背景 + 深色文字
+      spans.add(TextSpan(
+        text: _result.substring(index, index + _searchKeyword.length),
+        style: TextStyle(
+          color: isCurrentMatch 
+              ? Colors.white 
+              : const Color(0xFF1A1A2E), // 深色文字
+          fontSize: 13,
+          fontFamily: 'monospace',
+          height: 1.5,
+          fontWeight: FontWeight.bold,
+          backgroundColor: isCurrentMatch 
+              ? const Color(0xFFFF6B6B) // 橙红色，当前匹配
+              : const Color(0xFFFFE066), // 亮黄色，其他匹配
+        ),
+      ));
+
+      lastEnd = index + _searchKeyword.length;
+      matchIndex++;
+    }
+
+    // 添加剩余文本
+    if (lastEnd < _result.length) {
+      spans.add(TextSpan(
+        text: _result.substring(lastEnd),
+        style: const TextStyle(
+          color: AppTheme.textPrimary,
+          fontSize: 13,
+          fontFamily: 'monospace',
+          height: 1.5,
+        ),
+      ));
+    }
+
+    return SelectableText.rich(
+      TextSpan(children: spans),
+    );
+  }
+
+  /// 构建带有错误高亮的文本
+  Widget _buildErrorHighlightedText() {
+    final lines = _result.split('\n');
+    final spans = <TextSpan>[];
+
+    for (int i = 0; i < lines.length; i++) {
+      final line = lines[i];
+      final isErrorLine = line.startsWith('▶');
+      final isMarkerLine = line.contains('↑↑↑');
+
+      if (isMarkerLine) {
+        // 错误标记行 - 红色
+        spans.add(TextSpan(
+          text: '$line\n',
+          style: const TextStyle(
+            color: AppTheme.errorColor,
+            fontSize: 13,
+            fontFamily: 'monospace',
+            height: 1.5,
+            fontWeight: FontWeight.bold,
+          ),
+        ));
+      } else if (isErrorLine) {
+        // 错误行 - 红色背景
+        spans.add(TextSpan(
+          text: '$line\n',
+          style: TextStyle(
+            color: AppTheme.errorColor,
+            fontSize: 13,
+            fontFamily: 'monospace',
+            height: 1.5,
+            backgroundColor: AppTheme.errorColor.withOpacity(0.15),
+          ),
+        ));
+      } else {
+        // 普通行
+        spans.add(TextSpan(
+          text: i < lines.length - 1 ? '$line\n' : line,
+          style: const TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 13,
+            fontFamily: 'monospace',
+            height: 1.5,
+          ),
+        ));
+      }
+    }
+
+    return SelectableText.rich(
+      TextSpan(children: spans),
     );
   }
 }
