@@ -1,4 +1,5 @@
 import 'package:ble_tool/base64_module/page/base64_convert_page.dart';
+import 'package:ble_tool/base_conversion_module/page/radix_convert_page.dart';
 import 'package:ble_tool/json_module/page/json_tool_page.dart';
 import 'package:ble_tool/log_module/page/log_list_page.dart';
 import 'package:ble_tool/string_module/page/string_tool_page.dart';
@@ -129,6 +130,24 @@ class _MainPageState extends State<MainPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => const StringToolPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildToolCard(
+                    icon: Icons.calculate_rounded,
+                    title: '进制转换',
+                    subtitle: '2/8/10/16进制',
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF30D158), Color(0xFF00C7BE)],
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RadixConvertPage(),
                         ),
                       );
                     },

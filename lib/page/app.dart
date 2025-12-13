@@ -1,6 +1,5 @@
 import 'package:ble_tool/log_module/provider/log_provider.dart';
 import 'package:ble_tool/theme/app_theme.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
