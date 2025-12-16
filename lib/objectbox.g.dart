@@ -23,7 +23,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(1, 2038367741388423912),
     name: 'BleLog',
-    lastPropertyId: const obx_int.IdUid(6, 4705293539106844855),
+    lastPropertyId: const obx_int.IdUid(8, 2522335159618932690),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -54,6 +54,18 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(6, 4705293539106844855),
         name: 'remark',
         type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 1401479361635050963),
+        name: 'imagesJson',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 2522335159618932690),
+        name: 'images',
+        type: 30,
         flags: 0,
       ),
     ],
@@ -164,12 +176,20 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final remarkOffset = object.remark == null
             ? null
             : fbb.writeString(object.remark!);
-        fbb.startTable(7);
+        final imagesJsonOffset = object.imagesJson == null
+            ? null
+            : fbb.writeString(object.imagesJson!);
+        final imagesOffset = fbb.writeList(
+          object.images.map(fbb.writeString).toList(growable: false),
+        );
+        fbb.startTable(9);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, bleNameOffset);
         fbb.addOffset(2, dataOffset);
         fbb.addInt64(4, object.date.millisecondsSinceEpoch);
         fbb.addOffset(5, remarkOffset);
+        fbb.addOffset(6, imagesJsonOffset);
+        fbb.addOffset(7, imagesOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -191,16 +211,25 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final remarkParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 14);
+        final imagesJsonParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 16);
         final dateParam = DateTime.fromMillisecondsSinceEpoch(
           const fb.Int64Reader().vTableGet(buffer, rootOffset, 12, 0),
         );
-        final object = BleLog(
-          id: idParam,
-          bleName: bleNameParam,
-          data: dataParam,
-          remark: remarkParam,
-          date: dateParam,
-        );
+        final object =
+            BleLog(
+                id: idParam,
+                bleName: bleNameParam,
+                data: dataParam,
+                remark: remarkParam,
+                imagesJson: imagesJsonParam,
+                date: dateParam,
+              )
+              ..images = const fb.ListReader<String>(
+                fb.StringReader(asciiOptimization: true),
+                lazy: false,
+              ).vTableGet(buffer, rootOffset, 18, []);
 
         return object;
       },
@@ -282,6 +311,16 @@ class BleLog_ {
   /// See [BleLog.remark].
   static final remark = obx.QueryStringProperty<BleLog>(
     _entities[0].properties[4],
+  );
+
+  /// See [BleLog.imagesJson].
+  static final imagesJson = obx.QueryStringProperty<BleLog>(
+    _entities[0].properties[5],
+  );
+
+  /// See [BleLog.images].
+  static final images = obx.QueryStringVectorProperty<BleLog>(
+    _entities[0].properties[6],
   );
 }
 

@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:2038367741388423912",
-      "lastPropertyId": "6:4705293539106844855",
+      "lastPropertyId": "8:2522335159618932690",
       "name": "BleLog",
       "properties": [
         {
@@ -33,6 +33,16 @@
           "id": "6:4705293539106844855",
           "name": "remark",
           "type": 9
+        },
+        {
+          "id": "7:1401479361635050963",
+          "name": "imagesJson",
+          "type": 9
+        },
+        {
+          "id": "8:2522335159618932690",
+          "name": "images",
+          "type": 30
         }
       ],
       "relations": []
