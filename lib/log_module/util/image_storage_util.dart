@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
@@ -31,6 +32,24 @@ class ImageStorageUtil {
       
       // 复制文件到应用目录
       await sourceFile.copy(targetPath);
+      
+      return targetPath;
+    } catch (e) {
+      print('保存图片失败: $e');
+      return null;
+    }
+  }
+
+  /// 从字节数据保存图片到应用目录（用于剪切板粘贴）
+  /// 返回保存后的图片路径
+  static Future<String?> saveImageFromBytes(Uint8List bytes, String fileName) async {
+    try {
+      final imageDir = await getImageDirectory();
+      final targetPath = path.join(imageDir.path, fileName);
+      
+      // 写入文件
+      final file = File(targetPath);
+      await file.writeAsBytes(bytes);
       
       return targetPath;
     } catch (e) {

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:ble_tool/app_base_page.dart';
 import 'package:ble_tool/log_module/model/ble_log.dart';
@@ -8,6 +9,7 @@ import 'package:ble_tool/theme/app_theme.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:pasteboard/pasteboard.dart';
 
 class BleLogEditPage extends AppBaseStatefulPage {
   final BleLog? bleLog;  // 可选参数，传入时为编辑模式
@@ -282,6 +284,47 @@ class _BleLogEditPageState extends AppBaseStatefulPageState<BleLogEditPage> {
         ImageStorageUtil.deleteImage(removedPath);
       }
     });
+  }
+
+  /// 从剪切板粘贴图片
+  Future<void> _pasteImageFromClipboard() async {
+    if (!canAddMoreImages) {
+      _showError('最多只能添加4张图片');
+      return;
+    }
+
+    try {
+      // 获取剪切板中的图片
+      final Uint8List? imageBytes = await Pasteboard.image;
+      
+      if (imageBytes == null || imageBytes.isEmpty) {
+        _showError('剪切板中没有图片');
+        return;
+      }
+
+      // 检查图片大小
+      if (imageBytes.length > maxImageSizeBytes) {
+        _showError('图片过大，无法保存（最大 1MB，当前: ${_formatFileSize(imageBytes.length)}）');
+        return;
+      }
+
+      // 保存图片到应用目录
+      final savedPath = await ImageStorageUtil.saveImageFromBytes(
+        imageBytes,
+        'clipboard_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
+
+      if (savedPath != null) {
+        setState(() {
+          _imagePaths.add(savedPath);
+        });
+        _showSuccess('成功从剪切板粘贴图片');
+      } else {
+        _showError('保存图片失败');
+      }
+    } catch (e) {
+      _showError('从剪切板获取图片失败: $e');
+    }
   }
 
   void _showImagePreview(int index) {
@@ -602,60 +645,109 @@ class _BleLogEditPageState extends AppBaseStatefulPageState<BleLogEditPage> {
   }
 
   Widget _buildDropZone() {
-    return GestureDetector(
-      onTap: _pickImageFromFile,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          decoration: BoxDecoration(
-            color: _isDragging 
-                ? AppTheme.primaryColor.withOpacity(0.15) 
-                : AppTheme.surfaceColor,
-            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-            border: Border.all(
-              color: _isDragging 
-                  ? AppTheme.primaryColor 
-                  : AppTheme.primaryColor.withOpacity(0.3),
-              width: _isDragging ? 2 : 1,
-              style: BorderStyle.solid,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      decoration: BoxDecoration(
+        color: _isDragging 
+            ? AppTheme.primaryColor.withOpacity(0.15) 
+            : AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(
+          color: _isDragging 
+              ? AppTheme.primaryColor 
+              : AppTheme.primaryColor.withOpacity(0.3),
+          width: _isDragging ? 2 : 1,
+          style: BorderStyle.solid,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            _isDragging 
+                ? Icons.file_download_rounded 
+                : Icons.add_photo_alternate_rounded,
+            color: AppTheme.primaryColor,
+            size: 32,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _isDragging ? '松开以添加图片' : '拖拽图片到此处',
+            style: TextStyle(
+              color: AppTheme.primaryColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          child: Column(
+          const SizedBox(height: 4),
+          Text(
+            '最大 1MB，支持 JPG、PNG、GIF、WebP 格式',
+            style: TextStyle(
+              color: AppTheme.textHint,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // 按钮区域
+          Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                _isDragging 
-                    ? Icons.file_download_rounded 
-                    : Icons.add_photo_alternate_rounded,
-                color: AppTheme.primaryColor,
-                size: 32,
+              // 选择文件按钮
+              _buildActionButton(
+                icon: Icons.folder_open_rounded,
+                label: '选择文件',
+                onTap: _pickImageFromFile,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(width: 12),
+              // 从剪切板粘贴按钮
+              _buildActionButton(
+                icon: Icons.content_paste_rounded,
+                label: '从剪切板粘贴',
+                onTap: _pasteImageFromClipboard,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+            border: Border.all(
+              color: AppTheme.primaryColor.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: AppTheme.primaryColor,
+                size: 18,
+              ),
+              const SizedBox(width: 6),
               Text(
-                _isDragging ? '松开以添加图片' : '拖拽图片到此处',
+                label,
                 style: TextStyle(
                   color: AppTheme.primaryColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '或点击选择图片（最大 1MB）',
-                style: TextStyle(
-                  color: AppTheme.textHint,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '支持 JPG、PNG、GIF、WebP 格式',
-                style: TextStyle(
-                  color: AppTheme.textHint.withOpacity(0.7),
-                  fontSize: 11,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
